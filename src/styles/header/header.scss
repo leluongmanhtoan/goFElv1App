@@ -1,0 +1,134 @@
+body{
+    font-family: 'Poppins',sans-serif !important;
+}
+header {
+    width: 100%;
+    height: auto;
+    margin: auto;
+    padding: 15px 0px;
+    
+    .headerSearch {
+        width: 40%;
+        height: 50px;
+        border: 1px solid #3bb77e;
+        padding: 3px 12px;
+        border-radius: 90px;
+        position: absolute;
+        top: 6px;
+        .search {
+            width: 77%;
+            padding-left: 30px;
+            position: absolute;
+
+            input {
+                width: 100%;
+                height: 40px;
+                border: 0px;
+                outline: none !important;
+                font-size: 18px;
+                position: absolute;
+                left: 40px;
+            }
+        }
+
+        .searchIcon {
+            position: absolute;
+            top: 6px;
+            left: 0px;
+            opacity: 0.5;
+            font-size: 30px !important;
+        }
+
+        .selectDropWrapper {
+            width: 23%;
+            font-size: 16px;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .selectDropWrapper:after {
+            content: '';
+            width: 1px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.2);
+            position: absolute;
+            top: 5px;
+            right: 0px;
+        }
+    }
+
+    .headerTabs {
+        padding-left: 40px;
+
+        svg {
+            opacity: 0.8;
+        }
+
+        li {
+            position: relative;
+            margin-left: 10px;
+
+            span {
+                font-size: 20px;
+                cursor: pointer;
+
+                icon {
+                    font-size: 20px;
+                    cursor: pointer;
+                }
+            }
+        }
+    }
+
+    .dropdownMenu {
+        position: absolute;
+        top: 170%;
+        right: 0px;
+        z-index: 100;
+        width: 230px;
+        height: auto;
+        background: #fff;
+        box-shadow: 0 3px 6px rgb(0 0 0 / 20%);
+        padding: 15px 0px;
+        border-radius: 20px;
+
+        li {
+            width: 100%;
+            list-style: none;
+            margin: 0px;
+
+            button {
+                width: 100% !important;
+                text-align: left !important;
+                color: rgba(0, 0, 0, 0.7) !important;
+                justify-content: flex-start !important;
+                padding: 12px 15px !important;
+                text-transform: capitalize !important;
+                font-size: 16px !important;
+
+                svg {
+                    opacity: 0.7;
+                    margin-right: 8px !important;
+                }
+            }
+
+            button:focus {
+                outline: none;
+            }
+
+            button:hover {
+                background: #f1f1f1 !important;
+            }
+
+        }
+    }
+}
+
+.headerWrapper {
+    position: fixed;
+    transition: all .2s ease-in-out;
+    background: #fff;
+    box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.15);
+    width: 100%;
+    z-index: 100;
+}

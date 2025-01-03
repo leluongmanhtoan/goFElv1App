@@ -1,0 +1,24 @@
+.homePage {
+    width: 100%;
+    height: auto;
+    padding: 100px 0px;
+    background: #e2e5e9;
+}
+
+.homeForm{
+    margin: 0 !important;
+}
+.sidebarWrapper {
+    max-width: 35% !important;
+    flex: 0 0 25% !important;
+}
+
+.middleContent{
+    max-width: 70%;
+    flex: 0 0 70%;
+}
+
+.rightContent{
+    max-width: 30%;
+    flex: 0 0 25%;
+}
