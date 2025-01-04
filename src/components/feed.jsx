@@ -17,14 +17,13 @@ import Skeleton from '@mui/material/Skeleton';
 import { API_BASE_URL } from '../main';
 
 const Feed = ({ newPost, setNewPost }) => {
-  const [commentContent, setCommentContent] = useState('');
   const accessToken = localStorage.getItem('access_token');
   const [loading, setLoading] = useState(false); // State để theo dõi trạng thái tải
   const [error, setError] = useState(null); // State để lưu thông báo lỗi nếu có
   const [offset, setOffset] = useState(0); // Biến lưu offset
   const limit = 5; // Số lượng bài viết mỗi lần tải thêm
   const [hasMore, setHasMore] = useState(true)
-  const [comment, setComment] = useState([])
+
   // Hàm gọi API để lấy danh sách bài viết
   //const scrollPosition = useRef(0);
 
@@ -43,16 +42,18 @@ const Feed = ({ newPost, setNewPost }) => {
       });
 
       if (response.status === 200) {
-        const newPosts = response.data.data
+        const dataResp = response.data.data
         console.log(response.data.data)
-        if (!newPosts || newPosts.length === 0) {
+        if (!dataResp || dataResp.length === 0) {
           setHasMore(false)
           return
         }
+        const newPosts = dataResp.map(post => ({ ...post, comments: [] }));
         setNewPost((prevPosts) => {
           const filteredPosts = newPosts.filter(
             (post) => !prevPosts.some((prevPost) => prevPost.postId === post.postId)
           );
+
           return [...prevPosts, ...filteredPosts];
         })
       }
@@ -134,78 +135,55 @@ const Feed = ({ newPost, setNewPost }) => {
     }
   };
 
-  const handleSubmit = async () => {
-    if (content.trim() === '') {
-        setError("Bài viết không được để trống")
-        return
-    }
-    setLoading(true);
-    setError(null);
-    try {
-        const response = await axios.post(`${API_BASE_URL}/newsfeed/post/${postId}/comment`, {
-            content: content,
-            privacy: selectedOption
-        }, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`, // Nếu cần token
-                'Content-Type': 'application/json',
-            }
-        });
+  const handleCommentChange = (postId, value) => {
+    console.log(value)
+    setNewPost((prevPosts) =>
+      prevPosts.map((post) =>
+        post.postId === postId ? { ...post, commentInput: value } : post
+      )
+    )
+    /*const textarea = e.target;
+    textarea.style.height = "auto"; // Reset chiều cao trước khi tính toán
+    textarea.style.height = `${textarea.scrollHeight}px`; // Điều chỉnh chiều cao theo nội dung
+    setCommentContent(textarea.value);*/
+  };
 
-        if (response.status === 200) {
-            // Xử lý thành công (ví dụ, reset nội dung input hoặc thông báo thành công)
-            setContent('');
-            alert('Bài viết đã được đăng!');
-            console.log(response.data.data)
-            addPost(response.data.data)
-            const textarea = document.querySelector('textarea');
-            textarea.style.height = 'auto';
-            
-        } else {
-            setError('Đã có lỗi xảy ra khi đăng bài.');
-        }
-    } catch (err) {
-        setError('Đã có lỗi xảy ra khi kết nối tới server.');
-    } finally {
-        setLoading(false); // Kết thúc quá trình tải
-    }
-};
-const handleCommentSubmit = async () => {
-  if (content.trim() === '') {
-      setError("Bình luận không được để trống")
+  const handleCommentSubmit = async (postId) => {
+    const post = newPost.find((p) => p.postId === postId)
+    if (!post.commentInput) {
       return
-  }
-  setLoading(true);
-  setError(null);
-  try {
-      const response = await axios.post(`${API_BASE_URL}/newsfeed/post`, {
-          content: content,
-          privacy: selectedOption
+    }
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/newsfeed/post/${postId}/comment`, {
+        content: post.commentInput,
       }, {
-          headers: {
-              'Authorization': `Bearer ${accessToken}`, // Nếu cần token
-              'Content-Type': 'application/json',
-          }
+        headers: {
+          'Authorization': `Bearer ${accessToken}`, // Nếu cần token
+          'Content-Type': 'application/json',
+        }
       });
 
       if (response.status === 200) {
-          // Xử lý thành công (ví dụ, reset nội dung input hoặc thông báo thành công)
-          setContent('');
-          alert('Bài viết đã được đăng!');
-          console.log(response.data.data)
-          addPost(response.data.data)
-          const textarea = document.querySelector('textarea');
-          textarea.style.height = 'auto';
-          
+        // Xử lý thành công (ví dụ, reset nội dung input hoặc thông báo thành công)
+        //setCommentContent('');
+        alert('Bài viết đã được đăng!');
+        const newComment = response.data.data
+        setNewPost((prevPosts) =>
+          prevPosts.map((post) => post.postId === postId ? { ...post, comments: [newComment, ...post.comments], commentInput: '' } : post)
+        )
+
       } else {
-          setError('Đã có lỗi xảy ra khi đăng bài.');
+        setError('Đã có lỗi xảy ra khi đăng bài.');
       }
-  } catch (err) {
+    } catch (err) {
       setError('Đã có lỗi xảy ra khi kết nối tới server.');
-  } finally {
+    } finally {
       setLoading(false); // Kết thúc quá trình tải
-  }
-};
+    }
+  };
+
+
   return (
     <div>
       <div className="container mt-4">
@@ -299,12 +277,13 @@ const handleCommentSubmit = async () => {
                   </div>
                   <div className='commentInput-container'>
                     <textarea
-                      value="Hello"
-                      onChange=";lloo"
-                      placeholder="Bạn đang nghĩ gì thế?"
+                      value={post.commentInput || ''}
+                      onChange={(e) => handleCommentChange(post.postId, e.target.value)}
+                      placeholder="Viết bình luận..."
                       rows={1}
                       cols={50}
                     />
+                    <button onClick={() => handleCommentSubmit(post.postId)}>Gửi</button>
                   </div>
                 </div>
               </div>
