@@ -13,8 +13,9 @@ import { Navigate } from "react-router-dom";
 const HomePage = ({ isLoggedIn, setIsLoggedIn }) => {
     const [post, setPost] = useState([]);
     const addNewPost = (newPost) => {
+        const postWithComments = { ...newPost, comments: [] };
         setPost((prevPosts) => {
-            return [newPost, ...prevPosts]
+            return [postWithComments, ...prevPosts]
         });
     };
     return (

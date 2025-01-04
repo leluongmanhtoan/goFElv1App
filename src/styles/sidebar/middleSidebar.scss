@@ -57,6 +57,7 @@
     border-radius: 10px !important;
     margin-bottom: 30px;
     box-shadow: 0 3px 6px rgb(0 0 0 / 20%);
+
     .user-profile {
         display: flex;
         align-items: center;
@@ -85,11 +86,13 @@
             transition: all 0.2s ease-in-out;
             color: #525255;
             padding: 0 3px;
-            li{
+
+            li {
                 position: relative;
                 font-size: 14px;
-                list-style-type: none; 
+                list-style-type: none;
             }
+
             .dropdownMenu {
                 position: absolute;
                 top: 120%;
@@ -102,22 +105,25 @@
                 padding: 10px 0px 0px 8px;
                 border-radius: 10px;
                 color: #626262;
-                
-                li{
+
+                li {
                     text-decoration: none;
-                    list-style-type: none; 
+                    list-style-type: none;
                 }
             }
         }
-        .postmodeTabs:hover{
+
+        .postmodeTabs:hover {
             background: #4d84e2;
             color: #fff
         }
     }
-    .postInput-container{
+
+    .postInput-container {
         padding-left: 55px;
         padding-top: 20px;
-        textarea{
+
+        textarea {
             width: 100%;
             border: 0;
             outline: 0;
@@ -188,5 +194,45 @@
                 /* Loại bỏ shadow nếu có */
             }
         }
+    }
+}
+
+//Comments
+.comment-container {
+    max-height: 450px;
+    /* Đặt chiều cao cố định cho 5 bình luận */
+    overflow: auto;
+    /* Kích hoạt cuộn nếu bình luận vượt quá chiều cao cố định */
+    margin-top: 20px;
+    margin-bottom: 15px;
+
+    .commentcard {
+        overflow-anchor: none;
+        width: 100%;
+        padding: 25px;
+        border-radius: 10px !important;
+        margin-bottom: 30px;
+        background-color: #ccc;
+        .avatar-img {
+            padding-right: 20px;
+        }
+       
+    }
+
+}
+
+.commentInput-container {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+
+    textarea {
+        width: 100%;
+        border: 0;
+        outline: 0;
+        border-bottom: 1px solid #ccc;
+        background: transparent;
+        resize: none;
+        overflow: hidden
     }
 }

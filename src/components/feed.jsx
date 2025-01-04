@@ -11,18 +11,23 @@ import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import PostForm from './postform';
-import { NightShelter, RepeatOneSharp } from '@mui/icons-material';
+import { NightShelter, PostAddSharp, RepeatOneSharp } from '@mui/icons-material';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import Skeleton from '@mui/material/Skeleton';
 import { API_BASE_URL } from '../main';
 
 const Feed = ({ newPost, setNewPost }) => {
+  const offsets = useRef({});
+  const hasMoreComment = useRef({});
   const accessToken = localStorage.getItem('access_token');
   const [loading, setLoading] = useState(false); // State để theo dõi trạng thái tải
   const [error, setError] = useState(null); // State để lưu thông báo lỗi nếu có
   const [offset, setOffset] = useState(0); // Biến lưu offset
+  const [commentOffset, setCommentOffset] = useState(0); // Biến lưu offset
   const limit = 5; // Số lượng bài viết mỗi lần tải thêm
   const [hasMore, setHasMore] = useState(true)
+  const [showComments, setShowComments] = useState({});
+  //const [hasMoreComment, setHasMoreComment] = useState(true)
 
   // Hàm gọi API để lấy danh sách bài viết
   //const scrollPosition = useRef(0);
@@ -48,7 +53,8 @@ const Feed = ({ newPost, setNewPost }) => {
           setHasMore(false)
           return
         }
-        const newPosts = dataResp.map(post => ({ ...post, comments: [] }));
+        const newPosts = dataResp.map(post => ({ ...post, comments: post.comments || [] }));
+        //const newPosts = dataResp.map(post => ({ ...post, comments: [] }));
         setNewPost((prevPosts) => {
           const filteredPosts = newPosts.filter(
             (post) => !prevPosts.some((prevPost) => prevPost.postId === post.postId)
@@ -56,6 +62,7 @@ const Feed = ({ newPost, setNewPost }) => {
 
           return [...prevPosts, ...filteredPosts];
         })
+
       }
     } catch (err) {
       setError('Đã có lỗi xảy ra khi tải bài viết.');
@@ -107,14 +114,17 @@ const Feed = ({ newPost, setNewPost }) => {
     return <div>{error}</div>;
   }
 
-  const fetchComments = async (postId) => {
+  const fetchComments = useCallback(async (postId) => {
     // Ngăn gọi API khi đang tải
     if (loading) {
+      console.log("loading...")
       return
     }
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/newsfeed/post/${postId}/comments`, {
+      console.log("call api")
+      console.log(offsets.current[postId])
+      const response = await axios.get(`${API_BASE_URL}/newsfeed/post/${postId}/comments?limit=${limit}&offset=${offsets.current[postId] || 0}`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`, // Token nếu cần
           'Content-Type': 'application/json',
@@ -122,18 +132,47 @@ const Feed = ({ newPost, setNewPost }) => {
       });
 
       if (response.status === 200) {
+        const dataResp = response.data
         const newComments = response.data.data
+        if (!newComments || newComments.length === 0) {
+          //setHasMoreComment(false)
+          hasMoreComment.current[postId] = false
+          return
+        }
+
+        /*setNewPost((prevPosts) => {
+          prevPosts.map(post => {
+            if (post.postId === postId) {
+              const allComments = [...post.comments, ...newComments]
+              const uniqueComments = allComments.filter((comment, index, self) =>
+                index === self.findIndex((c) => c.commentId === comment.commentId));
+              return { ...post, comments: uniqueComments };
+            }
+            return post
+          })
+        })*/
         setNewPost((prevPosts) =>
-          prevPosts.map(post =>
-            post.postId === postId ? { ...post, comments: newComments } : post
-          ));
+          prevPosts.map(post => {
+            if (post.postId === postId) {
+              const allComments = [...post.comments, ...newComments];
+              const uniqueComments = allComments.filter((comment, index, self) => index === self.findIndex((c) => c.commentId === comment.commentId));
+              return { ...post, comments: uniqueComments };
+            }
+            return post;
+          })
+        );
+        //setNewPost((prevPosts) => prevPosts.map(post => post.postId === postId ? { ...post, comments: [...post.comments, ...newComments] } : post ));
+        console.log(dataResp.offset)
+        offsets.current[postId] = dataResp.offset
+        console.log(offsets.current[postId])
+
       }
     } catch (err) {
       setError('Đã có lỗi xảy ra khi tải bài viết.');
     } finally {
       setLoading(false); // Kết thúc trạng thái tải
     }
-  };
+  }, [])
 
   const handleCommentChange = (postId, value) => {
     console.log(value)
@@ -170,7 +209,7 @@ const Feed = ({ newPost, setNewPost }) => {
         alert('Bài viết đã được đăng!');
         const newComment = response.data.data
         setNewPost((prevPosts) =>
-          prevPosts.map((post) => post.postId === postId ? { ...post, comments: [newComment, ...post.comments], commentInput: '' } : post)
+          prevPosts.map((post) => post.postId === postId ? { ...post, comments: [newComment, ...(post.comments || [])], commentInput: '' } : post)
         )
 
       } else {
@@ -258,22 +297,69 @@ const Feed = ({ newPost, setNewPost }) => {
                     <button className={`${post.liked ? "liked" : ""} btn custom-button btn-primary btn-lg flex-fill`} onClick={() => handleLike(post.postId)}>
                       {post.liked ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />}
                       Thích</button>
-                    <button className="btn custom-button btn-primary btn-lg flex-fill" onClick={() => fetchComments(post.postId)}><CommentOutlinedIcon />Bình luận</button>
+                    <button className="btn custom-button btn-primary btn-lg flex-fill" onClick={() => {
+                      fetchComments(post.postId)
+                      setShowComments(prev => ({ ...prev, [post.postId]: true }))
+                    }}><CommentOutlinedIcon />Bình luận</button>
                     <button className="btn custom-button btn-primary btn-lg flex-fill"><ShareOutlinedIcon />Chia sẻ</button>
                   </div>
-                  <div className='comment-container'>
-                    Xem thêm bình luận
-                    {post.comments && post.comments.map((cmt, cmtindex) => (
-                      <div key={cmtindex} className="commentcard mb-3">
-                        <span className='avatar-img'>
-                          <img src={cmt.avatarUrl || "https://via.placeholder.com/40"} alt="avatar" className="rounded-circle me-2" style={{ width: "40px", height: "40px" }} />
-                        </span>
-                        <div>
-                          <strong>{cmt.firstname} {cmt.lastname}</strong>
-                          <p>{cmt.content}</p>
-                        </div>
-                      </div>
-                    ))}
+                  <div className='comment-container' id={`comment-${post.postId}`} onScroll={(e) => e.stopPropagation()}>
+                    {
+                      !showComments[post.postId] && (
+                        post.comments && post.comments.map((cmt, cmtindex) => (
+                          <div key={cmtindex} className="commentcard mb-3">
+                            <span className='avatar-img'>
+                              <img src={cmt.avatarUrl || "https://via.placeholder.com/40"} alt="avatar" className="rounded-circle me-2" style={{ width: "40px", height: "40px" }} />
+                            </span>
+                            <div>
+                              <strong>{cmt.firstname} {cmt.lastname}</strong>
+                              <p>{cmt.content}</p>
+                            </div>
+                          </div>
+                        ))
+                      )
+                    }
+                    {
+                      showComments[post.postId] && (
+                        <InfiniteScroll
+                          dataLength={post.comments.length}
+                          next={() => {
+                            if (!loading && hasMoreComment.current[post.postId] !== false) {
+                              offsets.current[post.postId] = offsets.current[post.postId] + limit;
+                              fetchComments(post.postId);
+                            }
+
+
+                          }}
+                          hasMore={hasMoreComment.current[post.postId] !== false}
+                          loader={
+                            Array.from(new Array(limit)).map((_, index) => (
+                              <div key={index} className="card mb-3">
+                                <div className="card-body">
+                                  <Skeleton variant="rectangular" height={40} />
+                                  <Skeleton variant="text" height={30} />
+                                  <Skeleton variant="text" height={20} />
+                                </div>
+                              </div>
+                            ))
+                          }
+                          scrollableTarget={`comment-${post.postId}`}
+                        >
+                          {post.comments && post.comments.map((cmt, cmtindex) => (
+                            <div key={cmtindex} className="commentcard mb-3">
+                              <span className='avatar-img'>
+                                <img src={cmt.avatarUrl || "https://via.placeholder.com/40"} alt="avatar" className="rounded-circle me-2" style={{ width: "40px", height: "40px" }} />
+                              </span>
+                              <div>
+                                <strong>{cmt.firstname} {cmt.lastname}</strong>
+                                <p>{cmt.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </InfiniteScroll>
+                      )
+                    }
+
                   </div>
                   <div className='commentInput-container'>
                     <textarea
